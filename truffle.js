@@ -12,7 +12,7 @@ module.exports = {
   rpc: {
     host: "localhost",
     port: 8545
-  }
+  },
   networks: {
     "net42": {
       network_id: 42
