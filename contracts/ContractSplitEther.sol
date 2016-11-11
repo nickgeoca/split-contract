@@ -5,6 +5,8 @@ contract ContractSplitEther {
   address private recipient1;
   address private recipient2;
 
+  bool private reentryGuard = false;
+
   function ContractSplitEther(address _recipient1, address _recipient2)
     validateAddress(_recipient1)
     validateAddress(_recipient2) 
@@ -13,9 +15,14 @@ contract ContractSplitEther {
     recipient2 = _recipient2;
   }
 
-  function () {
-    sendTo(recipient1, this.balance / 2);
-    sendTo(recipient2, this.balance);
+  function () 
+    payable
+  {
+    uint amount1 = msg.value / 2;
+    uint amount2 = msg.value - amount1;
+
+    sendTo(recipient1, amount1);
+    sendTo(recipient2, amount2);
   }
 
   // Public
@@ -32,7 +39,7 @@ contract ContractSplitEther {
   modifier validateAddress (address recipient) {
     if (recipient == 0) throw;
     _;
-  }    
+  }
 
 }
 
