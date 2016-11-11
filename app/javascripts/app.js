@@ -9,12 +9,18 @@ function setStatus(message) {
 function refreshBalance() {
   var contract = ContractSplitEther.deployed();
 
-  contract.getBalance.call(account, {from: account}).then(function(value) {
-    var balance_element = document.getElementById("balance");
-    balance_element.innerHTML = value.valueOf();
+  contract.getRecipients.call(account, {from: account}).then(function(value) {
+    var addr1 = value.valueOf()[0];
+    var addr2 = value.valueOf()[1];
+    var recipient1_element = document.getElementById("balance-r1");
+    var recipient2_element = document.getElementById("balance-r2");
+    var eth1 = web3.fromWei(web3.eth.getBalance(addr1), "ether").toString(10);
+    var eth2 = web3.fromWei(web3.eth.getBalance(addr2), "ether").toString(10);
+    recipient1_element.innerHTML = addr1.substring(0,8) + ' .. eth ' + eth1;
+    recipient2_element.innerHTML = addr2.substring(0,8) + ' .. eth ' + eth2;
   }).catch(function(e) {
-    console.log(e);
-    setStatus("Error getting balance; see log.");
+    console.error(e);
+    setStatus("Error getting balance: " + e);
   });
 };
 
@@ -22,16 +28,19 @@ function sendCoin() {
   var contract = ContractSplitEther.deployed();
 
   var amount = parseInt(document.getElementById("amount").value);
-  var receiver = document.getElementById("receiver").value;
+  var sender = document.getElementById("sender").value;
 
   setStatus("Initiating transaction... (please wait)");
 
-  contract.sendCoin(receiver, amount, {from: account}).then(function() {
-    setStatus("Transaction complete!");
+  web3.eth.sendTransaction({from:sender, to:contract.address, value: web3.toWei(amount, "ether")}, function(error, result) {    
+    if (error) {
+      console.error(error)
+      setStatus("Transaction failed: " + error);
+      return;
+    }
+    console.log('Transaction ID: ' + result);
     refreshBalance();
-  }).catch(function(e) {
-    console.log(e);
-    setStatus("Error sending coin; see log.");
+    setStatus("Transaction success!");
   });
 };
 
@@ -53,8 +62,3 @@ window.onload = function() {
     refreshBalance();
   });
 }
-
-/*
-truffle console --network net42
-geth --datadir ~/.ethereum/net42 --networkid 42 console
-*/
